@@ -56,9 +56,11 @@ except Exception as e:
 # scr to text
 scr = open(srtfile, "rt", encoding="utf-8").read()
 scr = re.sub(r'\<.+?\>', '', scr) # remove tag
+scr = re.sub(r'\{.+?\}', '', scr) # remove {...}
 scr_a = scr.split("\n\n")
 txt = ""
 for s in scr_a:
+    s = s.strip()
     sa = s.split("\n")
     del sa[0]
     if len(sa) == 0: continue
