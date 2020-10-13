@@ -35,6 +35,7 @@ infile = sys.argv[1]
 pdffile = change_ext(infile, '.pdf')
 srtfile = change_ext(infile, '.srt')
 htmlfile = change_ext(infile, '.html')
+textfile = change_ext(infile, '.txt')
 tplfile = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     'template.html')
@@ -58,6 +59,7 @@ scr = open(srtfile, "rt", encoding="utf-8").read()
 scr = re.sub(r'\<.+?\>', '', scr) # remove tag
 scr = re.sub(r'\{.+?\}', '', scr) # remove {...}
 scr_a = scr.split("\n\n")
+txt2 = ""
 txt = ""
 for s in scr_a:
     s = s.strip()
@@ -72,10 +74,17 @@ for s in scr_a:
     for i, ss in enumerate(sa):
         if i == 0:
             line += "<span class='time'>" + time_str + ":</span> "
+            txt2 += time_str + "> "
         else:
-            line += "&nbsp;" * 12
+            line += "&nbsp;" * 10
+            txt2 += " " * 10
         line += ss + "<br>\n"
+        txt2 += ss + "\n"
     txt += line
+
+# savet to textfile
+with open(textfile, 'wt', encoding='utf-8') as fp:
+    fp.write(txt2)
 
 # convert to html
 tpl = open(tplfile, 'rt', encoding='utf-8').read()
