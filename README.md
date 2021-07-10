@@ -12,12 +12,12 @@ Please install tools to $PATH.
 
  - ffmpeg
  - wkhtmltopdf
- - python
+ - python3
 
 # Install
 
 ```
-pip install pdfkit
+pip3 install pdfkit
 cd src
 chmod +x mp4topdf.py
 ```
@@ -26,6 +26,13 @@ chmod +x mp4topdf.py
 
 ```
 mp4topdf.py example.mp4
+```
+
+# macOS
+
+```
+brew install ffmpeg
+brew install wkhtmltopdf
 ```
 
 
