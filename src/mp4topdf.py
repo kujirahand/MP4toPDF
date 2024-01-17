@@ -6,6 +6,13 @@ import subprocess
 ffmpeg = 'ffmpeg'
 topdf = 'wkhtmltopdf'
 
+def change_ext(fname, ext):
+    out = re.sub(r'\.[a-zA-Z0-9\_\%]+$', ext, fname)
+    if ext != '.mp4':
+        if out == fname: out += ext
+    return out
+
+# check args
 if len(sys.argv) < 2:
     # check ffmpeg
     try:
@@ -23,11 +30,6 @@ if len(sys.argv) < 2:
     print("------------")
     print("[usage] mp4topdf.py video.mp4 (output.pdf)")
     quit()
-
-def change_ext(fname, ext):
-    out = re.sub(r'\.\w+?$', ext, fname)
-    if out == fname: out += ext
-    return out
 
 
 # get in/out file
@@ -60,12 +62,18 @@ print("out:", pdffile)
 cmd = [ffmpeg, "-y", "-i", infile, srtfile]
 try:
     chk = subprocess.check_call(cmd)
+    print('@@@', chk)
 except Exception as e:
+    with open(textfile, 'wt', encoding='utf-8') as fp:
+        fp.write("sorry failed to extract subtitle\n")
+        fp.write("REASON: " + str(e) + "\n")
     print("[ERROR] sorry failed to extract subtitle")
     print("[REASON]", e)
+    quit(-1)
 
 # scr to text
-scr = open(srtfile, "rt", encoding="utf-8").read()
+with open(srtfile, "rt", encoding="utf-8") as fp:
+    scr = fp.read()
 scr = re.sub(r'\<.+?\>', '', scr) # remove tag
 scr = re.sub(r'\{.+?\}', '', scr) # remove {...}
 scr_a = scr.split("\n\n")
