@@ -35,7 +35,13 @@ EOS;
 
 <body>
 
-    <?php if ($url === "") { echo $form; } ?>
+    <?php
+        if ($url === "") {
+            echo "<h1>動画(MP4)から字幕取り出しツール</h1>";
+            echo $form; 
+            echo "<div style='color:red;'>(注意) このツールを使うには動画に字幕が含まれている必要があります。</div>";
+        } 
+    ?>
 
     <?php if ($url) : ?>
         <h1>取り出した字幕データ</h1>
@@ -43,8 +49,12 @@ EOS;
 
         <h3>動画のURL</h3>
         <?php echo $form; ?>
+        <hr>
+        <div><a href="./index.php">新規字幕</a></div>
+
     <?php endif; ?>
 </body>
+
 <script>
     var wait = <?php echo $wait ? 'true' : 'false'; ?>;
     if (wait) {
@@ -72,9 +82,14 @@ function getSubtitles($url, $time)
     $textFile = DATA_DIR . '/' . changeExt($baseURL, '.txt');
     $lockFile = DATA_DIR . '/' . $baseURL . '.lock';
     $logFile = DATA_DIR . '/log.txt';
+    $mp4File = DATA_DIR . '/' . $baseURL;
     if (file_exists($textFile)) {
+        // clear cache
         if (file_exists($lockFile)) {
-            unlink($lockFile);
+            @unlink($lockFile);
+            if (file_exists($mp4File)) {
+                @unlink($mp4File);
+            }
         }
         $text = file_get_contents($textFile);
         if ($time !== 'on') {
@@ -102,7 +117,8 @@ function getSubtitles($url, $time)
     }
 }
 
-function changeExt($file, $ext) {
+function changeExt($file, $ext)
+{
     $file = preg_replace('/\.\w+$/', $ext, $file);
     return $file;
 }

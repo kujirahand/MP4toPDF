@@ -62,7 +62,6 @@ print("out:", pdffile)
 cmd = [ffmpeg, "-y", "-i", infile, srtfile]
 try:
     chk = subprocess.check_call(cmd)
-    print('@@@', chk)
 except Exception as e:
     with open(textfile, 'wt', encoding='utf-8') as fp:
         fp.write("sorry failed to extract subtitle\n")
