@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys,re,os
+import sys, re, os
 import subprocess
 
 ffmpeg = 'ffmpeg'
@@ -32,6 +32,16 @@ def change_ext(fname, ext):
 
 # get in/out file
 infile = sys.argv[1]
+
+# Is infile url?
+if re.match(r'^https?://', infile):
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    mp4file = os.path.join(data_dir, change_ext(os.path.basename(infile), '.mp4'))
+    subprocess.check_call(['wget', '-O', mp4file, infile])
+    infile = mp4file
+
 pdffile = change_ext(infile, '.pdf')
 srtfile = change_ext(infile, '.srt')
 htmlfile = change_ext(infile, '.html')
