@@ -13,12 +13,12 @@ $urlEnc = htmlspecialchars($url, ENT_QUOTES);
 $timeEnc = ($time === 'on') ? 'checked' : '';
 $form = <<< EOS
     <h1>以下に動画のURLを入力してください</h1>
-    <div style="border:1px solid silver; padding:1em;">
+    <div style="border:1px solid silver; padding:1em; background-color:#f0f0f0;">
     <form action="index.php" method="get">
         URL:<br>
-        <input type="text" name="url" size="60" value="$urlEnc"><br>
+        <input class="url_text" type="text" name="url" value="$urlEnc"><br>
         <input type="checkbox" id="time" name="time" value="on" $timeEnc><label for="time">時間を表示</label><br>
-        <input type="submit" value="字幕を取得">
+        <input type="submit" value="動画から字幕を取得">
     </form>
     </div>
 EOS;
@@ -30,24 +30,36 @@ EOS;
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>字幕取り出しツール</title>
+    <style>
+        .jimaku {
+            font-size: 1.2em;
+            width: 98%;
+            background-color: #fffff0;
+        }
+
+        .url_text {
+            width: 98%;
+            font-size: 1.0em;
+        }
+    </style>
 </head>
 
 <body>
 
     <?php
-        if ($url === "") {
-            echo "<h1>動画(MP4)から字幕取り出しツール</h1>";
-            echo $form; 
-            echo "<div style='color:red;'>(注意) このツールを使うには動画に字幕が含まれている必要があります。</div>";
-        } 
+    if ($url === "") {
+        echo "<h1>動画(MP4)から字幕取り出しツール</h1>";
+        echo $form;
+        echo "<div style='color:red;'>(注意) このツールを使うには動画に字幕が含まれている必要があります。</div>";
+    }
     ?>
 
     <?php if ($url) : ?>
-        <h1>取り出した字幕データ</h1>
-        <textarea id="subtitle" cols="60" rows="30"><?php echo htmlspecialchars($text, ENT_QUOTES); ?></textarea>
-
-        <h3>動画のURL</h3>
+        <h1>取り出した字幕データ:</h1>
+        <textarea id="subtitle" class="jimaku" cols="60" rows="30"><?php echo htmlspecialchars($text, ENT_QUOTES); ?></textarea>
+        <hr>
         <?php echo $form; ?>
         <hr>
         <div><a href="./index.php">新規字幕</a></div>
