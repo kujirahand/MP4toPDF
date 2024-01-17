@@ -3,10 +3,26 @@ define("DATA_DIR", dirname(__FILE__) . '/data');
 global $wait;
 $wait = FALSE;
 $text = '';
-$url = isset($_GET['url']) ? $_GET['url'] : '';
+$url = empty($_GET['url']) ? '' : $_GET['url'];
+$time = empty($_GET['time']) ? '' : $_GET['time'];
 if ($url) {
-    $text = getSubtitles($url);
+    $text = getSubtitles($url, $time);
 }
+
+$urlEnc = htmlspecialchars($url, ENT_QUOTES);
+$timeEnc = ($time === 'on') ? 'checked' : '';
+$form = <<< EOS
+    <h1>以下に動画のURLを入力してください</h1>
+    <div style="border:1px solid silver; padding:1em;">
+    <form action="index.php" method="get">
+        URL:<br>
+        <input type="text" name="url" size="60" value="$urlEnc"><br>
+        <input type="checkbox" id="time" name="time" value="on" $timeEnc><label for="time">時間を表示</label><br>
+        <input type="submit" value="字幕を取得">
+    </form>
+    </div>
+EOS;
+
 ?>
 
 <!DOCTYPE html>
@@ -19,23 +35,14 @@ if ($url) {
 
 <body>
 
-    <?php if ($url === "") : ?>
-        <h1>以下に動画のURLを入力してください</h1>
-        <form action="index.php" method="get">
-            <input type="text" name="url" size="60" value="<?php echo htmlspecialchars($url, ENT_QUOTES); ?>">
-            <input type="submit" value="取得">
-        </form>
-    <?php endif; ?>
+    <?php if ($url === "") { echo $form; } ?>
 
     <?php if ($url) : ?>
         <h1>取り出した字幕データ</h1>
         <textarea id="subtitle" cols="60" rows="30"><?php echo htmlspecialchars($text, ENT_QUOTES); ?></textarea>
 
         <h3>動画のURL</h3>
-        <form action="index.php" method="get">
-            <input type="text" name="url" size="60" value="<?php echo htmlspecialchars($url, ENT_QUOTES); ?>">
-            <input type="submit" value="再取得">
-        </form>
+        <?php echo $form; ?>
     <?php endif; ?>
 </body>
 <script>
@@ -51,7 +58,7 @@ if ($url) {
 </html>
 
 <?php
-function getSubtitles($url)
+function getSubtitles($url, $time)
 {
     if ($url == "") {
         return "URLを指定してください。";
@@ -69,7 +76,19 @@ function getSubtitles($url)
         if (file_exists($lockFile)) {
             unlink($lockFile);
         }
-        return file_get_contents($textFile);
+        $text = file_get_contents($textFile);
+        if ($time !== 'on') {
+            $result = "";
+            $lines = explode("\n", $text);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                $line = preg_replace('/^\d+\:\d+:\d+\>/', '', $line);
+                $line = trim($line);
+                $result .= $line . "\n";
+            }
+            $text = $result;
+        }
+        return $text;
     }
     if (preg_match('/\.mp4$/', $baseURL)) {
         file_put_contents($lockFile, 'lock');
