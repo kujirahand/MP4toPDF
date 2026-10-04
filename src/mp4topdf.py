@@ -2,9 +2,10 @@
 
 import sys, re, os
 import subprocess
+from html import escape
+from io import BytesIO
 
 ffmpeg = 'ffmpeg'
-topdf = 'wkhtmltopdf'
 
 def change_ext(fname, ext):
     out = re.sub(r'\.[a-zA-Z0-9\_\%]+$', ext, fname)
@@ -20,11 +21,6 @@ if len(sys.argv) < 2:
     except Exception as e:
         print(e)
         print('please install ffmpeg')
-        quit()
-    try:
-        chk = subprocess.check_call([topdf, '--version'])
-    except:
-        print('please install wkhtmltopdf')
         quit()
     # show usage
     print("------------")
@@ -46,13 +42,9 @@ if re.match(r'^https?://', infile):
 
 pdffile = change_ext(infile, '.pdf')
 srtfile = change_ext(infile, '.srt')
-htmlfile = change_ext(infile, '.html')
 textfile = change_ext(infile, '.txt')
-tplfile = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    'template.html')
 if len(sys.argv) >= 3:
-    outfile = sys.argv[2]
+    pdffile = sys.argv[2]
 
 print("in:", infile)
 print("out:", pdffile)
@@ -70,63 +62,82 @@ except Exception as e:
     print("[REASON]", e)
     quit(-1)
 
-# scr to text
+# srt to text
 with open(srtfile, "rt", encoding="utf-8") as fp:
     scr = fp.read()
 scr = re.sub(r'\<.+?\>', '', scr) # remove tag
 scr = re.sub(r'\{.+?\}', '', scr) # remove {...}
 scr_a = scr.split("\n\n")
 txt2 = ""
-txt = ""
 for s in scr_a:
     s = s.strip()
     sa = s.split("\n")
     del sa[0]
     if len(sa) == 0: continue
-    m = re.match('\d+:\d+:\d+', sa[0])
+    m = re.match(r'\d+:\d+:\d+', sa[0])
     if not m: continue
     time_str = m.group(0)
     del sa[0]
-    line = ""
     for i, ss in enumerate(sa):
         if i == 0:
-            line += "<span class='time'>" + time_str + ":</span> "
             txt2 += time_str + "> "
         else:
-            line += "&nbsp;" * 10
             txt2 += " " * 10
-        line += ss + "<br>\n"
         txt2 += ss + "\n"
-    txt += line
 
 # savet to textfile
 with open(textfile, 'wt', encoding='utf-8') as fp:
     fp.write(txt2)
 
-# convert to html
-tpl = open(tplfile, 'rt', encoding='utf-8').read()
-tpl = tpl.replace('__TEXT__', txt)
-with open(htmlfile, 'wt', encoding='utf-8') as fp:
-    fp.write(tpl)
+# Draw the transcript directly into a PDF. ReportLab provides text layout and
+# Japanese CID fonts; pypdf writes the final document without an external renderer.
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from pypdf import PdfReader, PdfWriter
 
-# convert to pdf
-import pdfkit
-options = {
-    'page-size': 'A4',
-    'margin-top': '0.1in',
-    'margin-right': '0.1in',
-    'margin-bottom': '0.1in',
-    'margin-left': '0.1in',
-    'encoding': "UTF-8",
-    #'no-outline': None
-}
-pdfkit.from_file(htmlfile, pdffile, options=options)
+pdfmetrics.registerFont(UnicodeCIDFont('HeiseiKakuGo-W5'))
+line_style = ParagraphStyle(
+    'TranscriptLine', fontName='HeiseiKakuGo-W5', fontSize=10.5,
+    leading=16, wordWrap='CJK', textColor=colors.black,
+)
+story = []
+for block in scr_a:
+    lines = block.strip().splitlines()
+    if len(lines) < 3:
+        continue
+    time_match = re.match(r'(\d{2}:\d{2}:\d{2})', lines[1])
+    if not time_match:
+        continue
+    subtitle_lines = [re.sub(r'\{.+?\}', '', re.sub(r'<.+?>', '', line)).strip()
+                      for line in lines[2:]]
+    subtitle_lines = [line for line in subtitle_lines if line]
+    if not subtitle_lines:
+        continue
+    for index, line in enumerate(subtitle_lines):
+        prefix = f"{time_match.group(1)} - " if index == 0 else "　　　　- "
+        story.append(Paragraph(escape(prefix + line), line_style))
+    story.append(Spacer(1, 2 * mm))
+
+rendered_pdf = BytesIO()
+document = SimpleDocTemplate(
+    rendered_pdf, pagesize=A4,
+    rightMargin=18 * mm, leftMargin=18 * mm,
+    topMargin=16 * mm, bottomMargin=16 * mm,
+    title=os.path.basename(pdffile),
+)
+document.build(story)
+reader = PdfReader(rendered_pdf)
+writer = PdfWriter()
+writer.append_pages_from_reader(reader)
+writer.add_metadata({'/Title': os.path.basename(pdffile), '/Creator': 'MP4toPDF'})
+with open(pdffile, 'wb') as output:
+    writer.write(output)
 print("ok.")
-
-
-
-
-
 
 
 
