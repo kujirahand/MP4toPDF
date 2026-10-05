@@ -45,6 +45,22 @@ chmod +x mp4topdf.sh
 ./mp4topdf.sh example.mp4
 ```
 
+To extract the subtitles as timestamped plain text instead of PDF:
+
+```
+uv run src/mp4totxt.py example.mp4
+```
+
+Or use the shell wrapper:
+
+```
+chmod +x mp4totxt.sh
+./mp4totxt.sh example.mp4
+```
+
+Both commands accept an optional output filename, such as
+`./mp4totxt.sh example.mp4 transcript.txt`.
+
 # How to use
 
 ```

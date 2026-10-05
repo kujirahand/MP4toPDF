@@ -78,12 +78,7 @@ for s in scr_a:
     if not m: continue
     time_str = m.group(0)
     del sa[0]
-    for i, ss in enumerate(sa):
-        if i == 0:
-            txt2 += time_str + "> "
-        else:
-            txt2 += " " * 10
-        txt2 += ss + "\n"
+    txt2 += time_str + "> " + " ".join(sa) + "\n"
 
 # savet to textfile
 with open(textfile, 'wt', encoding='utf-8') as fp:
@@ -138,7 +133,6 @@ writer.add_metadata({'/Title': os.path.basename(pdffile), '/Creator': 'MP4toPDF'
 with open(pdffile, 'wb') as output:
     writer.write(output)
 print("ok.")
-
 
 
 
